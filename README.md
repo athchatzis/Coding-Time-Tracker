@@ -65,6 +65,10 @@ Currently, the script supports **PyCharm** as the target IDE.
 
 You can easily modify the code to support another IDE, such as Visual Studio Code, by changing the corresponding process name (for example, `Code.exe`).
 
+## VERY IMPORTANT
+
+For those who download for the first time the win32gui win32process **DO NOT** try to pip install win32gui. You need to install pywin32 via **pip install pywin32**. This will take care both  win32gui and win32process.
+
 ## Notes
 
 This is a simple personal tool and currently does not include a graphical user interface. It is designed to work quietly in the background without distracting the user.
