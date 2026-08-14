@@ -1,0 +1,274 @@
+import json
+from time import strftime
+
+import requests
+from datetime import datetime
+
+
+import win32gui
+import win32process
+import psutil
+
+import time
+
+from psutil import NoSuchProcess
+from pynput import keyboard, mouse
+
+from threading import Timer
+
+
+
+My_USER_NAME = "athanasios-ch"
+MY_TOKEN = "athanasios!@#$%" #basically is my password
+MY_GRAPH_ID = "graph-1"
+PIXELA_ENDPOINT = "https://pixe.la/v1/users"
+
+HEADERS = {
+        "X-USER-TOKEN": MY_TOKEN
+    }
+
+
+
+#_____________________________________Application Activity Finder________________________________
+def active_application() ->tuple[str,int]:
+    """Returns the current running process/window that we are working on OR we have open"""
+
+    #retrieving HWND number
+    hwnd = win32gui.GetForegroundWindow()
+    #print(hwnd)
+
+    #It returns the window  we are currently in
+    #window_text = win32gui.GetWindowText(hwnd)
+    #print(window_text)
+
+    #Retrieves the identifier of the thread and process that created the specified window(HWND)
+    #we only care about PID
+    thread_id,pid = win32process.GetWindowThreadProcessId(hwnd)
+    #print(thread_id,pid)
+
+    #psutil.Process returns Useful info about given pid->(pid=21132, name='pycharm64.exe', status='running', started='16:39:27')
+    try:
+        process = psutil.Process(pid) # App failure detected (1) Unexpected 'no process found with the given pid'
+    except Exception as e:
+        print(e)
+        process_name = "None"
+    else:
+        process_name = process.name()
+
+    return process_name,pid
+#_____________________________________________________________________________________________________
+
+
+#___________________Mouse & Keyboard Activity Detection____________________________________________________
+def keyboard_activity(key):
+    global last_activity
+    last_activity = time.monotonic()
+
+
+def mouse_activity(x, y):
+    global last_activity
+    last_activity = time.monotonic()
+
+#__________________________________________________________________________________________________________________
+
+#____________________________________Account Related Methods For Pixela__________________________________________
+def account_creation_pixela():
+
+    user_param = {
+        "token": MY_TOKEN,
+        "username": My_USER_NAME,
+        "agreeTermsOfService": "yes",
+        "notMinor": "yes"
+    }
+
+    response = requests.post(PIXELA_ENDPOINT,json=user_param)
+    print(response)
+    print(response.text)
+
+def project_creation_pixela():
+    pixela_graph_endpoint = f"{PIXELA_ENDPOINT}/{My_USER_NAME}/graphs"
+
+
+
+    graph_config = {
+        "id": MY_GRAPH_ID,
+        "name": "Coding Tracker",
+        "unit": "hours",
+        "type": "float",
+        "color": "shibafu"
+    }
+    headers = {
+        "X-USER-TOKEN": MY_TOKEN
+    }
+
+    response =requests.post(url=pixela_graph_endpoint, json=graph_config, headers=headers)
+    print(response.text)
+
+def create_pixel(quantity:str):
+    now = datetime.now()
+    yyyymmdd = now.strftime("%Y%m%d")
+
+    add_graph_pixel_endpoint = f"{PIXELA_ENDPOINT}/{My_USER_NAME}/graphs/{MY_GRAPH_ID}"
+
+    pixe_config = {
+        "date": yyyymmdd,
+        "quantity": "2"
+    }
+    response = requests.post(url=add_graph_pixel_endpoint,json=pixe_config,headers=HEADERS)
+    print(response.text)
+
+
+def change_pixel_pixela(quantity:str,date:str):
+    now = datetime.now()
+    yyyymmdd = now.strftime("%Y%m%d")
+    if date is not None:
+        #my formated date is Y:M:D... Pixela accepts YMD
+        yyyymmdd = date.replace(":","")
+        print(yyyymmdd)
+
+    change_pixel = {
+        "quantity": quantity
+    }
+    change_pixel_endpoint = f"{PIXELA_ENDPOINT}/{My_USER_NAME}/graphs/{MY_GRAPH_ID}/{yyyymmdd}"
+    #resent request insures that the data will be send if a problem occurs. Standar Pixela requests are rejected by 25%
+    resent_request = Timer(10.0, change_pixel_pixela, (quantity, data))
+
+    try:
+        response = requests.put(url=change_pixel_endpoint,json=change_pixel,headers=HEADERS)
+    except Exception as e:
+        print(e)
+        resent_request.start()
+    else:
+        print(response.text)
+        resent_request.cancel()
+
+
+#________________________________________________________________________________________
+
+def day_changed(date_today:str,data:dict)->bool:
+    """Checks if somehow day changed while you were still working. if Yes, saves all the data to the
+     previous day (locally and to Pixela)."""
+    if date_today != data["date"]:
+        change_pixel_pixela(str(data["hours_coding"] / 3600), data["date"])
+
+        date_today = datetime.now().strftime("%Y:%m:%d")
+        data["date"] = date_today
+        data["hours_coding"] = 0.0
+        return True
+    return False
+
+def write_to_file(data:dict):
+    with open ("last_session.json", "w") as file:
+        json.dump(data,file,indent=4)
+
+def ide_closed(py_pid:int,data_save:dict):
+    """This method checks if the Pycharm got closed while the .exe is running on the background.
+    Checks if the pycharm's PID is changed. if it is, then that means that the program closed"""
+
+    try:
+        process = psutil.Process(py_pid)
+    except NoSuchProcess:
+        #that means Previous Pycharm process deleted/closed
+        write_to_file(data_save)
+
+#_________________________________MAIN_________________________________________________
+#.MaxRetryError, error handling at request fix
+keyboard_listener = keyboard.Listener(
+    on_press=keyboard_activity
+)
+
+mouse_listener = mouse.Listener(
+    on_move=mouse_activity,
+    on_click=mouse_activity
+)
+
+keyboard_listener.start()
+mouse_listener.start()
+
+date_today = datetime.now().strftime("%Y:%m:%d")
+
+data = {}
+
+try:
+    with open("last_session.json","r") as file:
+        data = json.load(file)
+except FileNotFoundError:
+    with open("last_session.json" , "w") as file:
+
+        info_to_save = {
+            "date": date_today,
+            "hours_coding": 0.0
+        }
+
+        json.dump(info_to_save,file,indent=4)
+
+if not data:
+    #data is empty
+    data = {
+        "date": date_today,
+        "hours_coding": 0.0
+    }
+
+
+#Keep in mind that the counter is in seconds, for mins is runtime/60 for hours is runtime/3600
+#The json file metric is in seconds, the name is 'codding_hours' because we need to parse it to Pixela as hours aka /3600
+
+
+#Check's if For the current day there is prior info
+if data["date"] == date_today and data["hours_coding"] != 0:
+    #that means that for today's date there is a prior info
+    run_time = data["hours_coding"]
+else:
+    run_time = 0
+
+
+last_activity = time.monotonic()
+
+set_idle_time = 600 #in seconds --> 10 min max idle
+is_idle = 0
+ide_pid = None
+
+current_session = time.monotonic()
+start_session = time.monotonic()
+
+time_format = strftime("%H hrs: %M mins: %S sec",time.gmtime(data['hours_coding']))
+print(f"Previous Data for today's day ({data['date']}) time codding: {time_format}")
+
+try:
+    while True:
+        ide_closed(ide_pid,data)
+        if day_changed(date_today,data):
+            write_to_file(data)
+
+
+        if time.monotonic() - current_session >= 2700:
+            #2700 seconds are 45 mins
+            #That mean, time to Send the Data locally
+            current_session = time.monotonic()
+            #Update the Data in pixela
+            change_pixel_pixela(str(run_time/3600),None)
+
+            write_to_file(data)
+
+
+        active_app,app_pid = active_application()
+        if active_app == "pycharm64.exe":
+            ide_pid = app_pid
+            idle_time = time.monotonic() - last_activity
+            if idle_time > set_idle_time:
+                print(f"You Have been Idle for more than {idle_time/60} Mins!!")
+                is_idle = 1
+                #print(f"current programming run time:{(run_time - is_idle * set_idle_time) / 60}")
+            else:
+                run_time = (run_time + 1) - is_idle * set_idle_time
+                data["hours_coding"] = run_time
+                is_idle= 0
+
+        time.sleep(1)
+
+except KeyboardInterrupt:
+    print("Pycharm Closed")
+    write_to_file(data)
+    time_format = strftime("%H hrs: %M mins: %S sec", time.gmtime(data['hours_coding']))
+    current_time = strftime("%H hrs: %M mins: %S sec", time.gmtime(time.monotonic()-start_session))
+    print(f"Total today's Runtime ->{time_format}, Current Runtime->{current_time}")
