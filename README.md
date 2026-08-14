@@ -1,4 +1,4 @@
-# Coding Time Tracker
+# Coding Time Tracker Python
 
 A simple Python background tool that tracks the amount of time you spend programming each day.
 
