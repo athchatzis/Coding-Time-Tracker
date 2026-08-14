@@ -18,9 +18,9 @@ from threading import Timer
 
 
 
-My_USER_NAME = "athanasios-ch"
-MY_TOKEN = "athanasios!@#$%" #basically is my password
-MY_GRAPH_ID = "graph-1"
+My_USER_NAME = "yourname"
+MY_TOKEN = "yourPixelaToken" #basically your password
+MY_GRAPH_ID = "nameOFtheGraph"
 PIXELA_ENDPOINT = "https://pixe.la/v1/users"
 
 HEADERS = {
