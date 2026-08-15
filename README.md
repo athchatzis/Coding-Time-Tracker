@@ -61,13 +61,13 @@ The program will now start automatically when you log in to Windows.
 
 ## Configuration
 
-Currently, the script supports **PyCharm** as the target IDE.
+Currently, the script supports **PyCharm,VS Code,Visual Studio,IntelliJ IDEA** as the target IDE.
 
-You can easily modify the code to support another IDE, such as Visual Studio Code, by changing the corresponding process name (for example, `Code.exe`).
+You can easily modify the code to support another IDE, such as Android Studio Code, by changing the corresponding process name (for example, `studio64.exe`).
 
 ## VERY IMPORTANT
 
-For those who download for the first time the win32gui win32process **DO NOT** try to pip install win32gui. You need to install pywin32 via **pip install pywin32**. This will take care both  win32gui and win32process.
+For those who download for the first time the win32gui win32process **DO NOT** try to pip install win32gui. You need to install **pywin32** via **pip install pywin32**. This will take care both  win32gui and win32process.
 
 ## Notes
 
