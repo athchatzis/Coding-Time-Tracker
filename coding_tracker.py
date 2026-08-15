@@ -23,6 +23,8 @@ MY_TOKEN = "yourPixelaToken" #basically your password
 MY_GRAPH_ID = "nameOFtheGraph"
 PIXELA_ENDPOINT = "https://pixe.la/v1/users"
 
+WORKING_IDES = ["pycharm64.exe","Code.exe","devenv.exe","idea64.exe"]
+
 HEADERS = {
         "X-USER-TOKEN": MY_TOKEN
     }
@@ -118,7 +120,7 @@ def create_pixel(quantity:str):
     print(response.text)
 
 
-def change_pixel_pixela(quantity:str,date:str):
+def change_pixel_pixela(quantity:str,date:str|None):
     now = datetime.now()
     yyyymmdd = now.strftime("%Y%m%d")
     if date is not None:
@@ -252,7 +254,7 @@ try:
 
 
         active_app,app_pid = active_application()
-        if active_app == "pycharm64.exe":
+        if active_app in WORKING_IDES:
             ide_pid = app_pid
             idle_time = time.monotonic() - last_activity
             if idle_time > set_idle_time:
@@ -267,7 +269,7 @@ try:
         time.sleep(1)
 
 except KeyboardInterrupt:
-    print("Pycharm Closed")
+    print("Your IDE Closed")
     write_to_file(data)
     time_format = strftime("%H hrs: %M mins: %S sec", time.gmtime(data['hours_coding']))
     current_time = strftime("%H hrs: %M mins: %S sec", time.gmtime(time.monotonic()-start_session))
