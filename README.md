@@ -27,6 +27,9 @@ The project uses the **Pixela API**, which allows you to track your programming 
 
 You will need to create your own Pixela account and configure your own project/graph before using the online tracking functionality.
 
+Once the Account is created, pas the information into the user_id.json. This file contains the Keys `user_name` ,`graph_id` and `token`.
+The Script needs the above identification to work, otherwise it will appear an error window when try to execute.
+
 ## Running as a `.exe`
 
 The script is ready to run both from an IDE and as a standalone executable. I recommend running it as an `.exe` and configuring it to start automatically with Windows.
