@@ -16,12 +16,28 @@ from pynput import keyboard, mouse
 
 from threading import Timer
 
+from tkinter import messagebox
+
+user_id = {"user_name" : "",
+           "graph_id" : "",
+           "token": ""}
+try:
+    with open("user_id.json","r") as file:
+        user_id = json.load(file)
+except FileNotFoundError:
+    with open ("user_id.json", "w") as file:
+        json.dump(user_id,file,indent=4)
 
 
-My_USER_NAME = "yourname"
-MY_TOKEN = "yourPixelaToken" #basically your password
-MY_GRAPH_ID = "nameOFtheGraph"
+
+
+
+My_USER_NAME = user_id["user_name"]
+MY_TOKEN = user_id["token"]
+MY_GRAPH_ID = user_id["graph_id"]
 PIXELA_ENDPOINT = "https://pixe.la/v1/users"
+FLAG = True
+
 
 WORKING_IDES = ["pycharm64.exe","Code.exe","devenv.exe","idea64.exe"]
 
@@ -29,6 +45,12 @@ HEADERS = {
         "X-USER-TOKEN": MY_TOKEN
     }
 
+pixela_check_name = requests.get(f"https://pixe.la/@{My_USER_NAME}").status_code
+pixela_check_graph_id = requests.get(f"https://pixe.la/v1/users/{My_USER_NAME}/graphs/{MY_GRAPH_ID}").status_code
+
+if pixela_check_name >=400 or pixela_check_graph_id >=400:
+    messagebox.showinfo(title="User Authentication Error ", message="Your Pixela name,graph-id or token is incorrect.\n If you dont have an account,create!",icon="error")
+    FLAG = False
 
 
 #_____________________________________Application Activity Finder________________________________
@@ -74,37 +96,7 @@ def mouse_activity(x, y):
 #__________________________________________________________________________________________________________________
 
 #____________________________________Account Related Methods For Pixela__________________________________________
-def account_creation_pixela():
 
-    user_param = {
-        "token": MY_TOKEN,
-        "username": My_USER_NAME,
-        "agreeTermsOfService": "yes",
-        "notMinor": "yes"
-    }
-
-    response = requests.post(PIXELA_ENDPOINT,json=user_param)
-    print(response)
-    print(response.text)
-
-def project_creation_pixela():
-    pixela_graph_endpoint = f"{PIXELA_ENDPOINT}/{My_USER_NAME}/graphs"
-
-
-
-    graph_config = {
-        "id": MY_GRAPH_ID,
-        "name": "Coding Tracker",
-        "unit": "hours",
-        "type": "float",
-        "color": "shibafu"
-    }
-    headers = {
-        "X-USER-TOKEN": MY_TOKEN
-    }
-
-    response =requests.post(url=pixela_graph_endpoint, json=graph_config, headers=headers)
-    print(response.text)
 
 def create_pixel(quantity:str):
     now = datetime.now()
@@ -236,8 +228,9 @@ start_session = time.monotonic()
 time_format = strftime("%H hrs: %M mins: %S sec",time.gmtime(data['hours_coding']))
 print(f"Previous Data for today's day ({data['date']}) time codding: {time_format}")
 
+# #If the Pixela user id is valid, start the counter --> Flag==True
 try:
-    while True:
+    while FLAG:
         ide_closed(ide_pid,data)
         if day_changed(date_today,data):
             write_to_file(data)
