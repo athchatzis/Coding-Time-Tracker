@@ -166,7 +166,6 @@ def ide_closed(py_pid:int,data_save:dict):
         write_to_file(data_save)
 
 #_________________________________MAIN_________________________________________________
-#.MaxRetryError, error handling at request fix
 keyboard_listener = keyboard.Listener(
     on_press=keyboard_activity
 )
@@ -227,7 +226,6 @@ start_session = time.monotonic()
 
 time_format = strftime("%H hrs: %M mins: %S sec",time.gmtime(data['hours_coding']))
 print(f"Previous Data for today's day ({data['date']}) time codding: {time_format}")
-
 # #If the Pixela user id is valid, start the counter --> Flag==True
 try:
     while FLAG:
@@ -263,7 +261,7 @@ try:
 
 except KeyboardInterrupt:
     print("Your IDE Closed")
-    write_to_file(data)
     time_format = strftime("%H hrs: %M mins: %S sec", time.gmtime(data['hours_coding']))
     current_time = strftime("%H hrs: %M mins: %S sec", time.gmtime(time.monotonic()-start_session))
     print(f"Total today's Runtime ->{time_format}, Current Runtime->{current_time}")
+    write_to_file(data)
