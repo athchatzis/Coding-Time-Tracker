@@ -18,28 +18,29 @@ from threading import Timer
 
 from tkinter import messagebox
 
-user_id = {"user_name" : "",
+user = {"user_name" : "",
            "graph_id" : "",
-           "token": ""}
+           "token": "",
+           "ide_to_track": ["pycharm64.exe","Code.exe","devenv.exe","idea64.exe"]}
 try:
-    with open("user_id.json","r") as file:
-        user_id = json.load(file)
+    with open("user_config.json", "r") as file:
+        user = json.load(file)
 except FileNotFoundError:
-    with open ("user_id.json", "w") as file:
-        json.dump(user_id,file,indent=4)
+    with open ("user_config.json", "w") as file:
+        json.dump(user, file, indent=4)
 
 
 
 
 
-My_USER_NAME = user_id["user_name"]
-MY_TOKEN = user_id["token"]
-MY_GRAPH_ID = user_id["graph_id"]
+My_USER_NAME = user["user_name"]
+MY_TOKEN = user["token"]
+MY_GRAPH_ID = user["graph_id"]
 PIXELA_ENDPOINT = "https://pixe.la/v1/users"
 FLAG = True
 
 
-WORKING_IDES = ["pycharm64.exe","Code.exe","devenv.exe","idea64.exe"]
+WORKING_IDES = user["ide_to_track"]
 
 HEADERS = {
         "X-USER-TOKEN": MY_TOKEN
@@ -139,9 +140,10 @@ def change_pixel_pixela(quantity:str,date:str|None):
 
 #________________________________________________________________________________________
 
-def day_changed(date_today:str,data:dict)->bool:
+def day_changed(data:dict)->bool:
     """Checks if somehow day changed while you were still working. if Yes, saves all the data to the
      previous day (locally and to Pixela)."""
+    date_today = datetime.now().strftime("%Y:%m:%d")
     if date_today != data["date"]:
         change_pixel_pixela(str(data["hours_coding"] / 3600), data["date"])
 
@@ -230,7 +232,7 @@ print(f"Previous Data for today's day ({data['date']}) time codding: {time_forma
 try:
     while FLAG:
         ide_closed(ide_pid,data)
-        if day_changed(date_today,data):
+        if day_changed(data):
             write_to_file(data)
 
 
