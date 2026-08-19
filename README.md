@@ -27,7 +27,7 @@ The project uses the **Pixela API**, which allows you to track your programming 
 
 You will need to create your own Pixela account and configure your own project/graph before using the online tracking functionality.
 
-Once the Account is created, pas the information into the user_id.json. This file contains the Keys `user_name` ,`graph_id` and `token`.
+Once the Account is created, pas the information into the user_confing.json. This file contains the Keys `user_name` ,`graph_id` and `token`.
 The Script needs the above identification to work, otherwise it will appear an error window when try to execute.
 
 ## Running as a `.exe`
@@ -64,9 +64,29 @@ The program will now start automatically when you log in to Windows.
 
 ## Configuration
 
-Currently, the script supports **PyCharm,VS Code,Visual Studio,IntelliJ IDEA** as the target IDE.
+Currently, the script supports **PyCharm, VS Code, Visual Studio, and IntelliJ IDEA** as target IDEs.
 
-You can easily modify the code to support another IDE, such as Android Studio Code, by changing the corresponding process name (for example, `studio64.exe`).
+You can easily modify the list of IDEs you want to track. There are two ways to do this:
+
+1. **Change the `ide_to_track` list directly in the code.**
+2. **Modify the `user_config.json` file**, which is automatically created the first time the `.exe` is executed.
+
+Inside `user_config.json`, locate the `ide_to_track` key and modify its list according to the IDEs you want to track.
+
+The default values for the `ide_to_track` list are:
+
+```python
+["pycharm64.exe", "Code.exe", "devenv.exe", "idea64.exe"]
+```
+
+For example, if you only want to track **PyCharm and VS Code**, you can change the list to:
+
+```python
+["pycharm64.exe", "Code.exe"]
+```
+
+> **Note:** The values in the list must correspond to the actual Windows `.exe` process names of the IDEs. For example, VS Code uses `Code.exe`, **not** `vscode.exe`.
+
 
 ## VERY IMPORTANT
 
