@@ -18,7 +18,7 @@ from threading import Timer
 
 from tkinter import messagebox
 
-from urllib3.exceptions import MaxRetryError
+
 
 user = {"user_name" : "",
            "graph_id" : "",
@@ -48,18 +48,7 @@ HEADERS = {
         "X-USER-TOKEN": MY_TOKEN
     }
 
-try:
-    pixela_check_name = requests.get(f"https://pixe.la/@{My_USER_NAME}").status_code
-    pixela_check_graph_id = requests.get(f"https://pixe.la/v1/users/{My_USER_NAME}/graphs/{MY_GRAPH_ID}").status_code
-except requests.exceptions.RequestException:
-    messagebox.showinfo(title="No internet ", message="Script Needs internet (when boot) to Authenticate User",icon="error")
-    pixela_check_name = 0
-    pixela_check_graph_id = 0
-    FLAG = False
 
-if pixela_check_name >=400 or pixela_check_graph_id >=400:
-    messagebox.showinfo(title="User Authentication Error ", message="Your Pixela name,graph-id or token is incorrect.\n If you dont have an account,create!",icon="error")
-    FLAG = False
 
 
 #_____________________________________Application Activity Finder________________________________
@@ -144,6 +133,29 @@ def change_pixel_pixela(quantity:str,date:str|None):
     else:
         print(response.text)
         resent_request.cancel()
+
+
+def user_authentication():
+    """Checks If the User with the specified Graph ID exists"""
+
+    try:
+        pixela_check_name = requests.get(f"https://pixe.la/@{My_USER_NAME}").status_code
+        pixela_check_graph_id = requests.get(
+            f"https://pixe.la/v1/users/{My_USER_NAME}/graphs/{MY_GRAPH_ID}").status_code
+    except requests.exceptions.RequestException:
+        pixela_check_name = 0
+        pixela_check_graph_id = 0
+
+    if pixela_check_name == 0 or pixela_check_graph_id == 0:
+        messagebox.showinfo(title="No internet ", message="Script Needs internet (when boot) to Authenticate User",
+                            icon="error")
+        return False
+    elif pixela_check_name >= 400 or pixela_check_graph_id >= 400:
+        messagebox.showinfo(title="User Authentication Error ",
+                            message="Your Pixela name,graph-id or token is incorrect.\n If you dont have an account,create!",
+                            icon="error")
+        return False
+    return True
 
 
 #________________________________________________________________________________________
@@ -236,9 +248,10 @@ start_session = time.monotonic()
 
 time_format = strftime("%H hrs: %M mins: %S sec",time.gmtime(data['hours_coding']))
 print(f"Previous Data for today's day ({data['date']}) time codding: {time_format}")
-# #If the Pixela user id is valid, start the counter --> Flag==True
+# #If the Pixela user id is valid, start the script Functionality
+is_user_valid = user_authentication()
 try:
-    while FLAG:
+    while is_user_valid:
         ide_closed(ide_pid,data)
         if day_changed(data):
             write_to_file(data)
