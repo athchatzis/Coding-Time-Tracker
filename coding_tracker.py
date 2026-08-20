@@ -18,6 +18,8 @@ from threading import Timer
 
 from tkinter import messagebox
 
+from urllib3.exceptions import MaxRetryError
+
 user = {"user_name" : "",
            "graph_id" : "",
            "token": "",
@@ -46,8 +48,14 @@ HEADERS = {
         "X-USER-TOKEN": MY_TOKEN
     }
 
-pixela_check_name = requests.get(f"https://pixe.la/@{My_USER_NAME}").status_code
-pixela_check_graph_id = requests.get(f"https://pixe.la/v1/users/{My_USER_NAME}/graphs/{MY_GRAPH_ID}").status_code
+try:
+    pixela_check_name = requests.get(f"https://pixe.la/@{My_USER_NAME}").status_code
+    pixela_check_graph_id = requests.get(f"https://pixe.la/v1/users/{My_USER_NAME}/graphs/{MY_GRAPH_ID}").status_code
+except requests.exceptions.RequestException:
+    messagebox.showinfo(title="No internet ", message="Script Needs internet (when boot) to Authenticate User",icon="error")
+    pixela_check_name = 0
+    pixela_check_graph_id = 0
+    FLAG = False
 
 if pixela_check_name >=400 or pixela_check_graph_id >=400:
     messagebox.showinfo(title="User Authentication Error ", message="Your Pixela name,graph-id or token is incorrect.\n If you dont have an account,create!",icon="error")
