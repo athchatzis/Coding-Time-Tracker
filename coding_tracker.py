@@ -137,7 +137,9 @@ def change_pixel_pixela(quantity:str,date:str|None):
 
 def user_authentication():
     """Checks If the User with the specified Graph ID exists"""
-
+    #Exception if Internet is off
+    #when Pc is turned on, give it a 10 seconds wait to connect to the Internet
+    time.sleep(10)
     try:
         pixela_check_name = requests.get(f"https://pixe.la/@{My_USER_NAME}").status_code
         pixela_check_graph_id = requests.get(
@@ -166,6 +168,9 @@ def day_changed(data:dict)->bool:
     date_today = datetime.now().strftime("%Y:%m:%d")
     if date_today != data["date"]:
         change_pixel_pixela(str(data["hours_coding"] / 3600), data["date"])
+        #Log file is Updates every New day
+        with open("log.txt", "a") as log:
+            log.write(f"{data['date']} : {data['hours_coding']}\n")
 
         date_today = datetime.now().strftime("%Y:%m:%d")
         data["date"] = date_today
