@@ -14,7 +14,7 @@ import time
 from psutil import NoSuchProcess
 from pynput import keyboard, mouse
 
-from threading import Timer
+#from threading import Timer
 
 from tkinter import messagebox
 
@@ -123,16 +123,18 @@ def change_pixel_pixela(quantity:str,date:str|None):
     }
     change_pixel_endpoint = f"{PIXELA_ENDPOINT}/{My_USER_NAME}/graphs/{MY_GRAPH_ID}/{yyyymmdd}"
     #resent request insures that the data will be send if a problem occurs. Standar Pixela requests are rejected by 25%
-    resent_request = Timer(10.0, change_pixel_pixela, (quantity, data))
+    #resent_request = Timer(10.0, change_pixel_pixela, (quantity, date))
 
     try:
         response = requests.put(url=change_pixel_endpoint,json=change_pixel,headers=HEADERS)
     except Exception as e:
         print(e)
-        resent_request.start()
+        console_print_save(str(e))
+        #resent_request.start()
     else:
         print(response.text)
-        resent_request.cancel()
+        console_print_save(response.text+f"{now}")
+        #resent_request.cancel()
 
 
 def user_authentication():
@@ -191,6 +193,10 @@ def ide_closed(py_pid:int,data_save:dict):
     except NoSuchProcess:
         #that means Previous Pycharm process deleted/closed
         write_to_file(data_save)
+
+def console_print_save(info:str):
+    with open("console_log.txt","a") as con:
+        con.write(f"{info}\n")
 
 #_________________________________MAIN_________________________________________________
 keyboard_listener = keyboard.Listener(
@@ -253,12 +259,14 @@ start_session = time.monotonic()
 
 time_format = strftime("%H hrs: %M mins: %S sec",time.gmtime(data['hours_coding']))
 print(f"Previous Data for today's day ({data['date']}) time codding: {time_format}")
+console_print_save(f"Previous Data for today's day ({data['date']}) time codding: {time_format}")
 # #If the Pixela user id is valid, start the script Functionality
 is_user_valid = user_authentication()
 try:
     while is_user_valid:
         ide_closed(ide_pid,data)
         if day_changed(data):
+            run_time = 0
             write_to_file(data)
 
 
@@ -289,7 +297,9 @@ try:
 
 except KeyboardInterrupt:
     print("Your IDE Closed")
+    console_print_save("Your IDE Closed")
     time_format = strftime("%H hrs: %M mins: %S sec", time.gmtime(data['hours_coding']))
     current_time = strftime("%H hrs: %M mins: %S sec", time.gmtime(time.monotonic()-start_session))
     print(f"Total today's Runtime ->{time_format}, Current Runtime->{current_time}")
+    console_print_save(f"Total today's Runtime ->{time_format}, Current Runtime->{current_time}")
     write_to_file(data)
