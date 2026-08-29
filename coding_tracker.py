@@ -129,11 +129,11 @@ def change_pixel_pixela(quantity:str,date:str|None):
         response = requests.put(url=change_pixel_endpoint,json=change_pixel,headers=HEADERS)
     except Exception as e:
         print(e)
-        console_print_save(str(e))
+        console_print_save(str(e) + f"\n\t--> {now}, Hrs{quantity}")
         #resent_request.start()
     else:
         print(response.text)
-        console_print_save(response.text+f"{now}")
+        console_print_save(response.text + f"\n\t--> {now}, Hrs{quantity}")
         #resent_request.cancel()
 
 
@@ -169,6 +169,7 @@ def day_changed(data:dict)->bool:
      previous day (locally and to Pixela)."""
     date_today = datetime.now().strftime("%Y:%m:%d")
     if date_today != data["date"]:
+        console_print_save(f"Day Changed Detected-->{date_today}")
         change_pixel_pixela(str(data["hours_coding"] / 3600), data["date"])
         #Log file is Updates every New day
         with open("log.txt", "a") as log:
