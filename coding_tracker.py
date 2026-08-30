@@ -39,7 +39,10 @@ My_USER_NAME = user["user_name"]
 MY_TOKEN = user["token"]
 MY_GRAPH_ID = user["graph_id"]
 PIXELA_ENDPOINT = "https://pixe.la/v1/users"
-FLAG = True
+
+is_prev_day_data_send = True
+prev_day_data = 0
+prev_day = ""
 
 
 WORKING_IDES = user["ide_to_track"]
@@ -110,7 +113,7 @@ def create_pixel(quantity:str):
     print(response.text)
 
 
-def change_pixel_pixela(quantity:str,date:str|None):
+def change_pixel_pixela(quantity:str,date:str|None)->int:
     now = datetime.now()
     yyyymmdd = now.strftime("%Y%m%d")
     if date is not None:
@@ -131,10 +134,12 @@ def change_pixel_pixela(quantity:str,date:str|None):
         print(e)
         console_print_save(str(e) + f"\n\t--> {now}, Hrs{quantity}")
         #resent_request.start()
+        return 400
     else:
         print(response.text)
         console_print_save(response.text + f"\n\t--> {now}, Hrs{quantity}")
         #resent_request.cancel()
+        return 200
 
 
 def user_authentication():
@@ -170,7 +175,14 @@ def day_changed(data:dict)->bool:
     date_today = datetime.now().strftime("%Y:%m:%d")
     if date_today != data["date"]:
         console_print_save(f"Day Changed Detected-->{date_today}")
-        change_pixel_pixela(str(data["hours_coding"] / 3600), data["date"])
+        #What Happens If Something Goes Wrong and previous data not send to Pixela?
+        response_code = change_pixel_pixela(str(data["hours_coding"] / 3600), data["date"])
+        if response_code == 400:
+            global is_prev_day_data_send,prev_day_data,prev_day
+            is_prev_day_data_send = False
+            prev_day_data = data["hours_coding"]
+            prev_day = data["date"]
+
         #Log file is Updates every New day
         with open("log.txt", "a") as log:
             log.write(f"{data['date']} : {data['hours_coding']}\n")
@@ -277,8 +289,14 @@ try:
             current_session = time.monotonic()
             #Update the Data in pixela
             change_pixel_pixela(str(run_time/3600),None)
-
             write_to_file(data)
+
+            #Mechanism To Send Previous Day's Data if Not already sent
+            if not is_prev_day_data_send:
+                code_response = change_pixel_pixela(str(prev_day_data/3600),prev_day)
+                if code_response == 200:
+                    is_prev_day_data_send = True
+                    console_print_save(f"*******************\n\t-->Previous Day's Data that did not send, now Sent!!")
 
 
         active_app,app_pid = active_application()
